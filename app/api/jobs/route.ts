@@ -10,7 +10,8 @@ const COST_PER_JOB = 4;
 
 // Pin a specific model version to avoid schema surprises.
 // Schema reference: https://replicate.com/jagilley/controlnet-canny/versions/aff48af9c68d162388d230a2ab003f68d2638d88307bdaf1c2f1ac95079c9613/api
-const MODEL = "jagilley/controlnet-canny:aff48af9c68d162388d230a2ab003f68d2638d88307bdaf1c2f1ac95079c9613";
+const MODEL =
+  "jagilley/controlnet-canny:aff48af9c68d162388d230a2ab003f68d2638d88307bdaf1c2f1ac95079c9613";
 
 function paramsFromIntensity(intensity: "low" | "medium" | "high") {
   if (intensity === "low") {
@@ -37,7 +38,9 @@ export async function POST(req: Request) {
   }
 
   // ensure user exists
-  await supabaseAdmin.from("users").upsert({ id: userId }, { onConflict: "id" });
+  await supabaseAdmin
+    .from("users")
+    .upsert({ id: userId }, { onConflict: "id" });
 
   // load credits
   const { data: userRow, error: userErr } = await supabaseAdmin
@@ -46,7 +49,8 @@ export async function POST(req: Request) {
     .eq("id", userId)
     .single();
 
-  if (userErr || !userRow) return Response.json({ error: "db_error" }, { status: 500 });
+  if (userErr || !userRow)
+    return Response.json({ error: "db_error" }, { status: 500 });
 
   // Free quota: 5 images total (so only 1 job + 1 extra image wouldn't fit). Tweak later.
   const isFreeEligible = userRow.free_used + COST_PER_JOB <= 5;
@@ -64,8 +68,10 @@ export async function POST(req: Request) {
     image_resolution: 512,
     ddim_steps: 30,
     scale: 8.5,
-    a_prompt: "best quality, extremely detailed, interior design, magazine photo",
-    n_prompt: "distorted architecture, warped walls, extra windows, missing doors, crooked perspective, fisheye, unrealistic scale, duplicate furniture, clutter, text, watermark, low quality, artifacts",
+    a_prompt:
+      "best quality, extremely detailed, interior design, magazine photo",
+    n_prompt:
+      "distorted architecture, warped walls, extra windows, missing doors, crooked perspective, fisheye, unrealistic scale, duplicate furniture, clutter, text, watermark, low quality, artifacts",
     ...intensityParams,
   };
 
@@ -84,7 +90,8 @@ export async function POST(req: Request) {
     .select("id")
     .single();
 
-  if (jobErr || !job) return Response.json({ error: "job_create_failed" }, { status: 500 });
+  if (jobErr || !job)
+    return Response.json({ error: "job_create_failed" }, { status: 500 });
 
   // charge now (anti-abuse)
   if (isFreeEligible) {
@@ -93,23 +100,31 @@ export async function POST(req: Request) {
       .update({ free_used: userRow.free_used + COST_PER_JOB })
       .eq("id", userId);
 
-    await supabaseAdmin
-      .from("credit_ledger")
-      .insert({ user_id: userId, job_id: job.id, delta: -COST_PER_JOB, reason: "free_quota_used" });
+    await supabaseAdmin.from("credit_ledger").insert({
+      user_id: userId,
+      job_id: job.id,
+      delta: -COST_PER_JOB,
+      reason: "free_quota_used",
+    });
   } else {
     await supabaseAdmin
       .from("users")
       .update({ credits: userRow.credits - COST_PER_JOB })
       .eq("id", userId);
 
-    await supabaseAdmin
-      .from("credit_ledger")
-      .insert({ user_id: userId, job_id: job.id, delta: -COST_PER_JOB, reason: "job_charge" });
+    await supabaseAdmin.from("credit_ledger").insert({
+      user_id: userId,
+      job_id: job.id,
+      delta: -COST_PER_JOB,
+      reason: "job_charge",
+    });
   }
 
   // enqueue worker call (QStash)
+  const baseUrl = process.env.APP_URL ?? new URL(req.url).origin;
+
   await qstash.publishJSON({
-    url: `${process.env.APP_URL}/api/worker/run-job`,
+    url: `${baseUrl}/api/worker/run-job`,
     body: { jobId: job.id },
   });
 
