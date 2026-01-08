@@ -1,27 +1,39 @@
+import type { NextRequest } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 
 export const runtime = "nodejs";
 
-export async function GET(_: Request, { params }: { params: { id: string } }) {
+export async function GET(
+  _req: NextRequest,
+  ctx: { params: Promise<{ id: string }> }
+) {
   const { userId } = await auth();
   if (!userId) return Response.json({ error: "unauthorized" }, { status: 401 });
 
-  const jobId = params.id;
+  const { id: jobId } = await ctx.params;
 
-  const { data: job } = await supabaseAdmin
+  const { data: job, error: jobErr } = await supabaseAdmin
     .from("jobs")
     .select("id,user_id,status,error,params")
     .eq("id", jobId)
     .single();
 
-  if (!job || job.user_id !== userId) return Response.json({ error: "not_found" }, { status: 404 });
+  if (jobErr || !job || job.user_id !== userId) {
+    return Response.json({ error: "not_found" }, { status: 404 });
+  }
 
-  const { data: outputs } = await supabaseAdmin
+  const { data: outputs, error: outErr } = await supabaseAdmin
     .from("job_outputs")
     .select("index,image_url")
     .eq("job_id", jobId)
     .order("index", { ascending: true });
 
-  return Response.json({ status: job.status, error: job.error, outputs: outputs ?? [] });
+  if (outErr) return Response.json({ error: "db_error" }, { status: 500 });
+
+  return Response.json({
+    status: job.status,
+    error: job.error,
+    outputs: outputs ?? [],
+  });
 }
