@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { RoomType, Style, Intensity } from "@/lib/presets";
+import { useRouter, useSearchParams } from "next/navigation";
 
 type JobStatus = "queued" | "running" | "succeeded" | "failed";
 
@@ -54,6 +55,8 @@ export function GenerateStep({
   onBack: () => void;
 }) {
   const [jobId, setJobId] = useState<string | null>(null);
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [status, setStatus] = useState<JobStatus | null>(null);
   const [outputs, setOutputs] = useState<
     { index: number; image_url: string }[]
@@ -64,6 +67,14 @@ export function GenerateStep({
     () => !!inputImageUrl && !!roomType && !!style && !!intensity,
     [inputImageUrl, roomType, style, intensity]
   );
+  useEffect(() => {
+    const existing = searchParams.get("jobId");
+    if (existing && !jobId) {
+      setJobId(existing);
+      setStatus("queued");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function start() {
     setError(null);
@@ -83,6 +94,7 @@ export function GenerateStep({
       return;
     }
     setJobId(json.jobId);
+    router.replace(`?jobId=${json.jobId}`, { scroll: false });
   }
 
   useEffect(() => {

@@ -1,6 +1,7 @@
 import Replicate from "replicate";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { verifySignatureAppRouter } from "@upstash/qstash/nextjs";
+import { uploadToCloudinary } from "@/lib/cloudinaryAdmin";
 
 export const runtime = "nodejs";
 
@@ -112,11 +113,16 @@ export const POST = verifySignatureAppRouter(async (req: Request) => {
     const arr = Array.isArray(output) ? output : (output as any)?.output ?? [];
     if (!Array.isArray(arr) || arr.length === 0) throw new Error("no_outputs");
 
-    // spesso il primo elemento è la canny/edge map -> prendiamo le ultime 4
+    // spesso il primo elemento è la canny map -> prendiamo le ultime 4
     const picked = arr.length > 4 ? arr.slice(-4) : arr;
     const urls = await Promise.all(picked.map(toUrl));
 
-    const inserts = urls.map((url, idx) => ({
+    // upload su Cloudinary per persistenza
+    const cloudUrls = await Promise.all(
+      urls.map((u, idx) => uploadToCloudinary(u, job.user_id, jobId, idx))
+    );
+
+    const inserts = cloudUrls.map((url, idx) => ({
       job_id: jobId,
       image_url: url,
       index: idx,
