@@ -15,6 +15,7 @@ export async function GET(req: Request) {
     .from("jobs")
     .select("id,created_at,status,room_type,style,intensity, job_outputs(index,image_url)")
     .eq("user_id", userId)
+    .eq("status", "succeeded")
     .order("created_at", { ascending: false })
     .limit(limit);
 
