@@ -139,7 +139,7 @@ export function GenerateStep({
           <div className="mt-1 text-muted-foreground">
             {status === "queued" && "Queued…"}
             {status === "running" && "Generating 4 variations…"}
-            {status === "failed" && "Failed. Try again or reduce intensity."}
+            {status === "failed" && "Retry in 30s."}
           </div>
           {error ? (
             <div className="mt-2 text-destructive">
