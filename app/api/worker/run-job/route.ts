@@ -47,7 +47,10 @@ export const POST = verifySignatureAppRouter(async (req: Request) => {
     const arr = Array.isArray(output) ? output : (output as any)?.output ?? [];
     if (!Array.isArray(arr) || arr.length === 0) throw new Error("no_outputs");
 
-    const urls = await Promise.all(arr.slice(0, 4).map(toUrl));
+    // spesso il primo elemento è la canny/edge map -> prendiamo le ultime 4
+    const picked = arr.length > 4 ? arr.slice(-4) : arr;
+    const urls = await Promise.all(picked.map(toUrl));
+
     const inserts = urls.map((url, idx) => ({
       job_id: jobId,
       image_url: url,
