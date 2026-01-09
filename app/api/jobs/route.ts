@@ -126,8 +126,8 @@ export async function POST(req: Request) {
   const intensityParams = paramsFromIntensity(intensity);
 
   const params = {
-    num_samples: 4,
-    image_resolution: 512,
+    num_samples: String(4),
+    image_resolution: String(512),
     ddim_steps: 30,
     scale: 8.5,
     a_prompt:
