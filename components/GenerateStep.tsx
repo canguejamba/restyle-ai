@@ -6,6 +6,40 @@ import type { RoomType, Style, Intensity } from "@/lib/presets";
 
 type JobStatus = "queued" | "running" | "succeeded" | "failed";
 
+function friendlyErrorMessage(raw?: string | null) {
+  if (!raw) return null;
+
+  const s = raw.toLowerCase();
+
+  // Replicate billing / credits
+  if (
+    s.includes("insufficient credit") ||
+    s.includes("payment required") ||
+    s.includes("status 402") ||
+    s.includes("replicate.com/account/billing")
+  ) {
+    return "The AI service is temporarily unavailable. Please try again later.";
+  }
+
+  // Common transient issues
+  if (
+    s.includes("timeout") ||
+    s.includes("timed out") ||
+    s.includes("etimedout") ||
+    s.includes("network") ||
+    s.includes("fetch failed")
+  ) {
+    return "Network issue while generating. Please try again.";
+  }
+
+  // QStash enqueue error
+  if (s.includes("enqueue_failed")) {
+    return "Queue is temporarily unavailable. Please try again.";
+  }
+
+  return "Generation failed. Please try again.";
+}
+
 export function GenerateStep({
   inputImageUrl,
   roomType,
@@ -21,7 +55,9 @@ export function GenerateStep({
 }) {
   const [jobId, setJobId] = useState<string | null>(null);
   const [status, setStatus] = useState<JobStatus | null>(null);
-  const [outputs, setOutputs] = useState<{ index: number; image_url: string }[]>([]);
+  const [outputs, setOutputs] = useState<
+    { index: number; image_url: string }[]
+  >([]);
   const [error, setError] = useState<string | null>(null);
 
   const canGenerate = useMemo(
@@ -105,7 +141,11 @@ export function GenerateStep({
             {status === "running" && "Generating 4 variations…"}
             {status === "failed" && "Failed. Try again or reduce intensity."}
           </div>
-          {error ? <div className="mt-2 text-destructive">Error: {error}</div> : null}
+          {error ? (
+            <div className="mt-2 text-destructive">
+              {friendlyErrorMessage(error)}
+            </div>
+          ) : null}
         </div>
       ) : null}
 
@@ -121,7 +161,12 @@ export function GenerateStep({
               />
               <div className="flex items-center justify-between p-3 text-sm">
                 <div>Variation {o.index + 1}</div>
-                <a className="underline" href={o.image_url} target="_blank" rel="noreferrer">
+                <a
+                  className="underline"
+                  href={o.image_url}
+                  target="_blank"
+                  rel="noreferrer"
+                >
                   Download
                 </a>
               </div>
