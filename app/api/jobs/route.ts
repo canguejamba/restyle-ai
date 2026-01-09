@@ -128,8 +128,8 @@ export async function POST(req: Request) {
   const params = {
     num_samples: String(4),
     image_resolution: String(512),
-    ddim_steps: String(30),
-    scale: String(8.5),
+    ddim_steps: 30,
+    scale: 8.5,
     a_prompt:
       "best quality, extremely detailed, interior design, magazine photo",
     n_prompt:
