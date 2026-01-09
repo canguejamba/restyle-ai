@@ -13,7 +13,7 @@ export async function uploadToCloudinary(
   jobId: string,
   index: number
 ) {
-  const res = await cloudinary.uploader.upload(remoteUrl, {
+  const res = await cloudinary.uploader.upload(String(remoteUrl), {
     folder: `restyle/${userId}/${jobId}`,
     public_id: `v${index}`,
     overwrite: true,
