@@ -10,10 +10,20 @@ const COST_PER_JOB = 4;
 
 async function toUrl(item: any): Promise<string> {
   if (typeof item === "string") return item;
-  if (item && typeof item.url === "function") return await item.url();
+
+  if (item && typeof item.url === "function") {
+    const u = await item.url();
+    return typeof u === "string" ? u : u?.toString?.() ?? String(u);
+  }
+
   if (item && typeof item.href === "string") return item.href;
+
+  // se è già un URL object
+  if (item instanceof URL) return item.toString();
+
   return String(item);
 }
+
 
 function norm(s: string) {
   return (s ?? "")

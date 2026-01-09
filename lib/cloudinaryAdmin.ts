@@ -8,12 +8,17 @@ cloudinary.config({
 });
 
 export async function uploadToCloudinary(
-  remoteUrl: string,
+  remoteUrl: any,
   userId: string,
   jobId: string,
   index: number
 ) {
-  const res = await cloudinary.uploader.upload(remoteUrl, {
+  const urlStr =
+    typeof remoteUrl === "string"
+      ? remoteUrl
+      : remoteUrl?.toString?.() ?? String(remoteUrl);
+
+  const res = await cloudinary.uploader.upload(urlStr, {
     folder: `restyle/${userId}/${jobId}`,
     public_id: `v${index}`,
     overwrite: true,
