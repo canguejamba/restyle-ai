@@ -17,8 +17,6 @@ export default async function GenerationsPage() {
         <a className="underline text-sm" href="/">Generate new</a>
       </div>
 
-      {/* Client component */}
-      {/* @ts-expect-error Server/Client boundary */}
       <GenerationsClient />
     </div>
   );
