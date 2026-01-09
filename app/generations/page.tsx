@@ -1,8 +1,9 @@
 import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 
 export default async function GenerationsPage() {
   const { userId } = await auth();
-  if (!userId) return null;
+  if (!userId) redirect("/sign-in");
 
   return (
     <div className="mx-auto max-w-6xl p-6 space-y-6">
@@ -16,8 +17,6 @@ export default async function GenerationsPage() {
         <a className="underline text-sm" href="/">Generate new</a>
       </div>
 
-      {/* Client component */}
-      {/* @ts-expect-error Server/Client boundary */}
       <GenerationsClient />
     </div>
   );
