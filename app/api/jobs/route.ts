@@ -131,9 +131,10 @@ export async function POST(req: Request) {
     ddim_steps: 30,
     scale: 8.5,
     a_prompt:
-      "best quality, extremely detailed, interior design, magazine photo",
+      "no text, no watermark, no logo, best quality, extremely detailed, interior design, magazine photo",
     n_prompt:
-      "distorted architecture, warped walls, extra windows, missing doors, crooked perspective, fisheye, unrealistic scale, duplicate furniture, clutter, text, watermark, low quality, artifacts",
+      "text, watermark, logo, signature, letters, words, typography, caption, brand, label, " +
+      "distorted architecture, warped walls, extra windows, missing doors, crooked perspective, fisheye, unrealistic scale, duplicate furniture, clutter, low quality, artifacts",
     ...intensityParams,
   };
 
