@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { LightboxGallery } from "@/components/LightboxGallery";
+import { cloudinaryTransform } from "@/lib/cloudinaryUrl";
 
 type Job = {
   id: string;
@@ -67,32 +69,26 @@ export default function GenerationsClient() {
           </div>
 
           {job.job_outputs?.length ? (
-            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {job.job_outputs.map((o) => (
-                <div
-                  key={o.index}
-                  className="overflow-hidden rounded-lg border"
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={o.image_url}
-                    alt={`Variation ${o.index + 1}`}
-                    className="h-40 w-full object-cover"
-                  />
-                  <div className="flex items-center justify-between p-2 text-xs">
-                    <span>V{o.index + 1}</span>
-                    <a
-                      className="underline"
-                      href={o.image_url}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Download
-                    </a>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <LightboxGallery
+              className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
+              images={(job.job_outputs ?? []).map((output) => {
+                const original = output.image_url;
+                const thumb = cloudinaryTransform(
+                  original,
+                  "c_fill,w_600,h_360,q_auto,f_auto"
+                );
+                const full = cloudinaryTransform(
+                  original,
+                  "c_limit,w_2200,q_auto,f_auto"
+                );
+
+                return {
+                  thumb,
+                  full,
+                  alt: `Variation ${output.index + 1}`,
+                };
+              })}
+            />
           ) : (
             <div className="mt-4 text-sm text-muted-foreground">
               No outputs saved.
