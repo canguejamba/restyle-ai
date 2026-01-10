@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { LightboxGallery } from "@/components/LightboxGallery";
+import { cloudinaryTransform } from "@/lib/cloudinaryUrl";
 
 type Job = {
   id: string;
@@ -70,10 +71,23 @@ export default function GenerationsClient() {
           {job.job_outputs?.length ? (
             <LightboxGallery
               className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
-              images={(job.job_outputs ?? []).map((output) => ({
-                url: output.image_url,
-                alt: `Variation ${output.index + 1}`,
-              }))}
+              images={(job.job_outputs ?? []).map((output) => {
+                const original = output.image_url;
+                const thumb = cloudinaryTransform(
+                  original,
+                  "c_fill,w_600,h_360,q_auto,f_auto"
+                );
+                const full = cloudinaryTransform(
+                  original,
+                  "c_limit,w_2200,q_auto,f_auto"
+                );
+
+                return {
+                  thumb,
+                  full,
+                  alt: `Variation ${output.index + 1}`,
+                };
+              })}
             />
           ) : (
             <div className="mt-4 text-sm text-muted-foreground">

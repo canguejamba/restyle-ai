@@ -8,7 +8,7 @@ import "yet-another-react-lightbox/styles.css";
 type Slide = { src: string; alt?: string };
 
 type LightboxGalleryProps = {
-  images: { url: string; alt?: string }[];
+  images: { thumb: string; full: string; alt?: string }[];
   className?: string;
 };
 
@@ -20,7 +20,7 @@ export function LightboxGallery({
   const [index, setIndex] = useState(0);
 
   const slides: Slide[] = useMemo(
-    () => images.map((image) => ({ src: image.url, alt: image.alt })),
+    () => images.map((image) => ({ src: image.full, alt: image.alt })),
     [images]
   );
 
@@ -29,7 +29,7 @@ export function LightboxGallery({
       <div className={className}>
         {images.map((img, i) => (
           <button
-            key={`${img.url}-${i}`}
+            key={`${img.thumb}-${i}`}
             type="button"
             className="group relative overflow-hidden rounded-lg border text-left"
             onClick={() => {
@@ -39,7 +39,7 @@ export function LightboxGallery({
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={img.url}
+              src={img.thumb}
               alt={img.alt ?? `Image ${i + 1}`}
               className="h-40 w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
               loading="lazy"
