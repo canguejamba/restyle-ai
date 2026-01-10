@@ -2,6 +2,7 @@ import Replicate from "replicate";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { verifySignatureAppRouter } from "@upstash/qstash/nextjs";
 import { uploadToCloudinary } from "@/lib/cloudinaryAdmin";
+import { refundIfCharged } from "@/lib/credits";
 
 export const runtime = "nodejs";
 
@@ -10,6 +11,7 @@ const COST_PER_JOB = 4;
 
 async function toUrl(item: any): Promise<string> {
   if (typeof item === "string") return item;
+  if (item instanceof URL) return item.toString();
 
   if (item && typeof item.url === "function") {
     const u = await item.url();
@@ -17,9 +19,6 @@ async function toUrl(item: any): Promise<string> {
   }
 
   if (item && typeof item.href === "string") return item.href;
-
-  // se è già un URL object
-  if (item instanceof URL) return item.toString();
 
   return String(item);
 }
@@ -159,70 +158,7 @@ export const POST = verifySignatureAppRouter(async (req: Request) => {
       })
       .eq("id", jobId);
 
-    // ---- IDENTITY / IDEMPOTENCY GUARD ----
-    // Se abbiamo già rimborsato questo job, non fare nulla.
-    const { data: alreadyRefunded } = await supabaseAdmin
-      .from("credit_ledger")
-      .select("id,reason")
-      .eq("job_id", jobId)
-      .eq("user_id", job.user_id)
-      .in("reason", ["job_refund_failed", "free_quota_refund_failed"])
-      .limit(1);
-
-    if (alreadyRefunded && alreadyRefunded.length > 0) {
-      // IMPORTANT: rispondi 200 per fermare i retry di QStash
-      return Response.json({ ok: false, refunded: true }, { status: 200 });
-    }
-
-    // ---- detect how it was charged ----
-    const { data: ledgerRows } = await supabaseAdmin
-      .from("credit_ledger")
-      .select("reason,delta")
-      .eq("job_id", jobId)
-      .eq("user_id", job.user_id)
-      .limit(50);
-
-    const charge = (ledgerRows ?? []).find(
-      (r: any) =>
-        r.delta === -COST_PER_JOB &&
-        (r.reason === "job_charge" || r.reason === "free_quota_used")
-    );
-
-    const { data: userRow } = await supabaseAdmin
-      .from("users")
-      .select("credits,free_used")
-      .eq("id", job.user_id)
-      .single();
-
-    if (userRow && charge?.reason === "job_charge") {
-      await supabaseAdmin
-        .from("users")
-        .update({ credits: (userRow.credits ?? 0) + COST_PER_JOB })
-        .eq("id", job.user_id);
-
-      await supabaseAdmin.from("credit_ledger").insert({
-        user_id: job.user_id,
-        job_id: jobId,
-        delta: +COST_PER_JOB,
-        reason: "job_refund_failed",
-      });
-    }
-
-    if (userRow && charge?.reason === "free_quota_used") {
-      await supabaseAdmin
-        .from("users")
-        .update({
-          free_used: Math.max(0, (userRow.free_used ?? 0) - COST_PER_JOB),
-        })
-        .eq("id", job.user_id);
-
-      await supabaseAdmin.from("credit_ledger").insert({
-        user_id: job.user_id,
-        job_id: jobId,
-        delta: +COST_PER_JOB,
-        reason: "free_quota_refund_failed",
-      });
-    }
+    await refundIfCharged(job.user_id, jobId, COST_PER_JOB);
 
     // IMPORTANT: torna 200 così QStash NON ritenta all’infinito.
     return Response.json({ ok: false }, { status: 200 });

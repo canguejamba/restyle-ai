@@ -2,10 +2,12 @@
 
 import { useMemo, useState } from "react";
 import Lightbox from "yet-another-react-lightbox";
+import Download from "yet-another-react-lightbox/plugins/download";
+import Fullscreen from "yet-another-react-lightbox/plugins/fullscreen";
 import Zoom from "yet-another-react-lightbox/plugins/zoom";
 import "yet-another-react-lightbox/styles.css";
 
-type Slide = { src: string; alt?: string };
+type Slide = { src: string; alt?: string; download?: string };
 
 type LightboxGalleryProps = {
   images: { thumb: string; full: string; alt?: string }[];
@@ -20,7 +22,12 @@ export function LightboxGallery({
   const [index, setIndex] = useState(0);
 
   const slides: Slide[] = useMemo(
-    () => images.map((image) => ({ src: image.full, alt: image.alt })),
+    () =>
+      images.map((image) => ({
+        src: image.full,
+        alt: image.alt,
+        download: image.full,
+      })),
     [images]
   );
 
@@ -28,29 +35,41 @@ export function LightboxGallery({
     <>
       <div className={className}>
         {images.map((img, i) => (
-          <button
+          <div
             key={`${img.thumb}-${i}`}
-            type="button"
-            className="group relative overflow-hidden rounded-lg border text-left"
-            onClick={() => {
-              setIndex(i);
-              setOpen(true);
-            }}
+            className="group relative overflow-hidden rounded-lg border"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={img.thumb}
-              alt={img.alt ?? `Image ${i + 1}`}
-              className="h-40 w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
-              loading="lazy"
-            />
-            <div className="absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-              <div className="absolute inset-0 bg-black/10" />
-              <div className="absolute bottom-2 right-2 rounded bg-black/60 px-2 py-1 text-xs text-white">
-                View
+            <button
+              type="button"
+              className="block w-full text-left"
+              onClick={() => {
+                setIndex(i);
+                setOpen(true);
+              }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={img.thumb}
+                alt={img.alt ?? `Image ${i + 1}`}
+                className="h-40 w-full object-cover transition-transform duration-200 group-hover:scale-[1.02]"
+                loading="lazy"
+              />
+              <div className="absolute inset-0 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                <div className="absolute inset-0 bg-black/10" />
+                <div className="absolute bottom-2 right-2 rounded bg-black/60 px-2 py-1 text-xs text-white">
+                  View
+                </div>
               </div>
-            </div>
-          </button>
+            </button>
+            <a
+              href={img.full}
+              target="_blank"
+              rel="noreferrer"
+              className="absolute bottom-2 left-2 rounded bg-black/60 px-2 py-1 text-xs text-white opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+            >
+              Download
+            </a>
+          </div>
         ))}
       </div>
 
@@ -59,7 +78,7 @@ export function LightboxGallery({
         close={() => setOpen(false)}
         index={index}
         slides={slides}
-        plugins={[Zoom]}
+        plugins={[Zoom, Fullscreen, Download]}
         carousel={{ finite: false }}
         controller={{ closeOnBackdropClick: true, closeOnPullDown: true }}
         on={{ view: ({ index: viewIndex }) => setIndex(viewIndex) }}
