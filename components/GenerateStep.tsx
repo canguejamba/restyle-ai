@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { RoomType, Style, Intensity } from "@/lib/presets";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 type JobStatus = "queued" | "running" | "succeeded" | "failed";
 
@@ -56,6 +56,7 @@ export function GenerateStep({
 }) {
   const [jobId, setJobId] = useState<string | null>(null);
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<JobStatus | null>(null);
   const [outputs, setOutputs] = useState<
@@ -67,14 +68,37 @@ export function GenerateStep({
     () => !!inputImageUrl && !!roomType && !!style && !!intensity,
     [inputImageUrl, roomType, style, intensity]
   );
+  const updateJobIdParam = useCallback(
+    (nextJobId: string | null) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (nextJobId) {
+        params.set("jobId", nextJobId);
+      } else {
+        params.delete("jobId");
+      }
+      const query = params.toString();
+      router.replace(query ? `${pathname}?${query}` : pathname, {
+        scroll: false,
+      });
+    },
+    [pathname, router, searchParams]
+  );
+
   useEffect(() => {
     const existing = searchParams.get("jobId");
-    if (existing && !jobId) {
+    if (existing && existing !== jobId) {
       setJobId(existing);
       setStatus("queued");
+      return;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
+    if (!existing && jobId) {
+      setJobId(null);
+      setStatus(null);
+      setOutputs([]);
+      setError(null);
+    }
+  }, [jobId, searchParams]);
 
   async function start() {
     setError(null);
@@ -94,7 +118,7 @@ export function GenerateStep({
       return;
     }
     setJobId(json.jobId);
-    router.replace(`?jobId=${json.jobId}`, { scroll: false });
+    updateJobIdParam(json.jobId);
   }
 
   useEffect(() => {
@@ -132,7 +156,14 @@ export function GenerateStep({
       <div className="flex items-center gap-3">
         <Button
           variant="outline"
-          onClick={onBack}
+          onClick={() => {
+            updateJobIdParam(null);
+            setJobId(null);
+            setStatus(null);
+            setOutputs([]);
+            setError(null);
+            onBack();
+          }}
           disabled={status === "running" || status === "queued"}
         >
           Back
