@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { RoomType, Style, Intensity } from "@/lib/presets";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { LightboxGallery } from "@/components/LightboxGallery";
+import { cloudinaryTransform } from "@/lib/cloudinaryUrl";
 
 type JobStatus = "queued" | "running" | "succeeded" | "failed";
 
@@ -193,29 +195,27 @@ export function GenerateStep({
       ) : null}
 
       {outputs.length > 0 ? (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {outputs.map((o) => (
-            <div key={o.index} className="overflow-hidden rounded-lg border">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={o.image_url}
-                alt={`Variation ${o.index + 1}`}
-                className="h-full w-full object-cover"
-              />
-              <div className="flex items-center justify-between p-3 text-sm">
-                <div>Variation {o.index + 1}</div>
-                <a
-                  className="underline"
-                  href={o.image_url}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Download
-                </a>
-              </div>
-            </div>
-          ))}
-        </div>
+        <LightboxGallery
+          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2"
+          images={outputs.map((o) => {
+            const original = o.image_url;
+
+            const thumb = cloudinaryTransform(
+              original,
+              "c_fill,w_1200,h_800,q_auto,f_auto"
+            );
+
+            // IMPORTANT: full dev'essere l'originale salvato su Cloudinary
+            // LightboxGallery penserà lui a costruire hi-res per zoom/fullscreen
+            const full = original;
+
+            return {
+              thumb,
+              full,
+              alt: `Variation ${o.index + 1}`,
+            };
+          })}
+        />
       ) : null}
     </div>
   );
