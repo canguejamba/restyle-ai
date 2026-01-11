@@ -72,19 +72,20 @@ export default function GenerationsClient() {
             <LightboxGallery
               className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
               images={(job.job_outputs ?? []).map((output) => {
+                // IMPORTANT:
+                // - thumb is transformed for fast grid
+                // - full MUST be the original Cloudinary URL (no transforms)
+                //   because LightboxGallery will generate hi-res URLs for zoom/fullscreen.
                 const original = output.image_url;
+
                 const thumb = cloudinaryTransform(
                   original,
                   "c_fill,w_600,h_360,q_auto,f_auto"
                 );
-                const full = cloudinaryTransform(
-                  original,
-                  "c_limit,w_2200,q_auto,f_auto"
-                );
 
                 return {
                   thumb,
-                  full,
+                  full: original,
                   alt: `Variation ${output.index + 1}`,
                 };
               })}
