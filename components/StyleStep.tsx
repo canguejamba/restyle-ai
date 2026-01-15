@@ -12,6 +12,7 @@ export function StyleStep({
   onIntensityChange,
   onBack,
   onNext,
+  showActions = true,
 }: {
   style: Style | null;
   intensity: Intensity;
@@ -19,6 +20,7 @@ export function StyleStep({
   onIntensityChange: (v: Intensity) => void;
   onBack: () => void;
   onNext: () => void;
+  showActions?: boolean;
 }) {
   return (
     <div className="space-y-6">
@@ -105,14 +107,16 @@ export function StyleStep({
         </div>
       </div>
 
-      <div className="flex items-center justify-between">
-        <Button variant="outline" onClick={onBack}>
-          Back
-        </Button>
-        <Button onClick={onNext} disabled={!style}>
-          Continue
-        </Button>
-      </div>
+      {showActions ? (
+        <div className="flex items-center justify-between">
+          <Button variant="outline" onClick={onBack}>
+            Back
+          </Button>
+          <Button onClick={onNext} disabled={!style}>
+            Continue
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }

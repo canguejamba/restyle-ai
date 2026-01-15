@@ -7,7 +7,13 @@ import Fullscreen from "yet-another-react-lightbox/plugins/fullscreen";
 import Zoom from "yet-another-react-lightbox/plugins/zoom";
 import "yet-another-react-lightbox/styles.css";
 
-type Slide = { src: string; alt?: string; download?: string };
+type Slide = {
+  src: string;
+  alt?: string;
+  download?: string;
+  srcSet?: { src: string; width: number }[];
+  sizes?: string;
+};
 
 type LightboxGalleryProps = {
   // thumb: small image for grid
@@ -106,11 +112,19 @@ export function LightboxGallery({ images, className }: LightboxGalleryProps) {
 
         // Always use a very large image for the lightbox; this is what fixes pixelation on zoom.
         const hiRes = withCloudinaryTransform(base, LB_4096);
+        const srcSet = [
+          { src: withCloudinaryTransform(base, LB_1600), width: 1600 },
+          { src: withCloudinaryTransform(base, LB_2400), width: 2400 },
+          { src: withCloudinaryTransform(base, LB_3200), width: 3200 },
+          { src: hiRes, width: 4096 },
+        ];
 
         return {
           src: hiRes,
           alt: image.alt,
           download: base,
+          srcSet,
+          sizes: "(max-width: 768px) 100vw, 90vw",
         };
       }),
     [images]

@@ -65,6 +65,7 @@ export function GenerateStep({
     { index: number; image_url: string }[]
   >([]);
   const [error, setError] = useState<string | null>(null);
+  const isBusy = status === "running" || status === "queued";
 
   const canGenerate = useMemo(
     () => !!inputImageUrl && !!roomType && !!style && !!intensity,
@@ -155,36 +156,13 @@ export function GenerateStep({
         </p>
       </div>
 
-      <div className="flex items-center gap-3">
-        <Button
-          variant="outline"
-          onClick={() => {
-            updateJobIdParam(null);
-            setJobId(null);
-            setStatus(null);
-            setOutputs([]);
-            setError(null);
-            onBack();
-          }}
-          disabled={status === "running" || status === "queued"}
-        >
-          Back
-        </Button>
-        <Button
-          onClick={start}
-          disabled={!canGenerate || status === "running" || status === "queued"}
-        >
-          {jobId ? "Regenerate (4 credits)" : "Generate (4 credits)"}
-        </Button>
-      </div>
-
       {status && status !== "succeeded" ? (
         <div className="rounded-lg border p-4 text-sm">
           <div className="font-medium">Status: {status}</div>
           <div className="mt-1 text-muted-foreground">
             {status === "queued" && "Queued…"}
             {status === "running" && "Generating 4 variations…"}
-            {status === "failed" && "Retry in 30s."}
+            {status === "failed" && "Failed. You can try again."}
           </div>
           {error ? (
             <div className="mt-2 text-destructive">
@@ -217,6 +195,39 @@ export function GenerateStep({
           })}
         />
       ) : null}
+
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t bg-background/95 backdrop-blur">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-6 py-3">
+          <div>
+            <div className="text-sm font-medium">Ready to generate</div>
+            <div className="text-xs text-muted-foreground">
+              4 images • 4 credits • ~10–30s
+            </div>
+            <div className="text-xs text-muted-foreground">
+              Room: {roomType} • Style: {style} • Intensity: {intensity}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                updateJobIdParam(null);
+                setJobId(null);
+                setStatus(null);
+                setOutputs([]);
+                setError(null);
+                onBack();
+              }}
+              disabled={isBusy}
+            >
+              Back
+            </Button>
+            <Button onClick={start} disabled={!canGenerate || isBusy}>
+              {jobId ? "Regenerate (4 credits)" : "Generate (4 credits)"}
+            </Button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

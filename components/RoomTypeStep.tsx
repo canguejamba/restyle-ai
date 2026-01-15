@@ -9,10 +9,12 @@ export function RoomTypeStep({
   value,
   onChange,
   onNext,
+  showActions = true,
 }: {
   value: RoomType | null;
   onChange: (v: RoomType) => void;
   onNext: () => void;
+  showActions?: boolean;
 }) {
   return (
     <div className="space-y-6">
@@ -60,11 +62,13 @@ export function RoomTypeStep({
         })}
       </div>
 
-      <div className="flex justify-end">
-        <Button onClick={onNext} disabled={!value}>
-          Continue
-        </Button>
-      </div>
+      {showActions ? (
+        <div className="flex justify-end">
+          <Button onClick={onNext} disabled={!value}>
+            Continue
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
 }
