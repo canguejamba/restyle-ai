@@ -32,7 +32,7 @@ export default function ThanksPage() {
           <Button>Back to Restyle AI</Button>
         </Link>
         <Link href="/pricing">
-          <Button variant="secondary">See pricing</Button>
+          <Button variant="outline">See pricing</Button>
         </Link>
       </div>
 
